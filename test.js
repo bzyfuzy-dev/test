@@ -1,21 +1,19 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-var formatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-
-  // These options are needed to round to whole numbers if that's what you want.
-  //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
-  //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
-});
+const date = new Date();
+let todayArr = date.toLocaleDateString("en-GB").split("/").reverse();
+todayArr[2] = ("0" + (Number(todayArr[2]) + 1)).slice(-2);
+let nextDay = todayArr.join("-");
 
 (async () => {
-  let browser = await puppeteer.launch({ devtools: true });
-
+  let browser = await puppeteer.launch({
+    args: ["--start-maximized"],
+    devtools: true,
+  });
   const page = await browser.newPage();
   await page.setViewport({
-    width: 1024,
-    height: 768,
+    width: 1920,
+    height: 1080,
     deviceScaleFactor: 1,
   });
   await page.goto("https://booking.com", {
@@ -31,6 +29,11 @@ var formatter = new Intl.NumberFormat("en-US", {
       browser.on("targetcreated", async (target) => {
         if (target.type() === "page") {
           const newPage = await target.page();
+          await newPage.setViewport({
+            width: 1920,
+            height: 1080,
+            deviceScaleFactor: 1,
+          });
           const newPagePromise = new Promise((y) =>
             newPage.once("domcontentloaded", () => y(newPage))
           );
@@ -73,81 +76,66 @@ var formatter = new Intl.NumberFormat("en-US", {
       hotelLink.click();
       let hotelViewPromise = getNewPageWhenLoaded();
       let hotelViewPage = await hotelViewPromise;
-      await hotelViewPage.waitForTimeout(4000);
-      const table = await hotelViewPage.$("#hprt-table");
-      let priceRows = await hotelViewPage.$$("#hprt-table tr");
-      ("prco-valign-middle-helper");
-      priceRows.shift();
-      let cheapest = {
-        index: 0,
-        price: 100000000,
-      };
-      for (let j = 0; j < priceRows.length; j++) {
-        let priceElem = await priceRows[j].$("span.prco-valign-middle-helper");
-        let priceString = await hotelViewPage.evaluate(
-          (el) => el.textContent,
-          priceElem
-        );
-        let price = Number(priceString.replace(/[^0-9.-]+/g, ""));
 
-        if (cheapest.price > price) {
-          cheapest.price = price;
-          cheapest.index = j;
-        }
-        // const price = priceRows[j].$eval;
-      }
-      priceRows[cheapest.index].screenshot({
-        path: `./out/${hotelT}-cheap.png`,
-      });
+      await ssTable(hotelViewPage, hotelT);
 
-      await table.screenshot({ path: `./out/${hotelT}.png` });
-      await hotelViewPage.waitForTimeout(5000);
+      // hotelViewPage.click(
+      //   `#hp_availability_style_changes > div.sb-searchbox__outer > form > div > div.xp__dates.xp__group`
+      // );
+      // await hotelViewPage.waitForTimeout(500);
+      // await hotelViewPage.click(
+      //   `#hp_availability_style_changes > div.sb-searchbox__outer > form > div > div.xp__dates.xp__group > div.xp-calendar.searchbox-calendar--with-prices > div > div > div.bui-calendar__content > div:nth-child(1) > table > tbody > tr > td[data-date="${nextDay}"]`
+      // );
+      // await hotelViewPage.waitForTimeout(250);
+
+      // let [submitButton] = hotelViewPage.$x(
+      //   '//*[@id="frm"]/div[1]/div[4]/div[2]/button'
+      // );
+      // if (submitButton) {
+      //   await submitButton.click();
+      //   await hotelViewPage.waitForTimeout(4000);
+      //   // let nextDayHotelViewPromise = getNewPageWhenLoaded();
+      //   // let nextDayHotelViewPage = await nextDayHotelViewPromise;
+      //   await ssTable(hotelViewPage, hotelT + "-next_day");
+      //   console.log("here");
+      // }
+
+      await hotelViewPage.waitForTimeout(1000);
       await hotelViewPage.close();
     }
   }
-
-  // hotelCards.forEach(async (card) => {
-  //   let withBre = await card.$('[data-testid="gallery-ribbon"]');
-  //   if (withBre) {
-  //     let hotelTitle = await card.$('[data-testid="title"]');
-  //     let hotelT = await newPage.evaluate((el) => el.textContent, hotelTitle);
-  //     const hotelLink = await card.$('[data-testid="title-link"]');
-  //     console.log(hotelT);
-  //     console.log(hotelLink);
-  //     hotelLink.tap();
-  //     // await hotelLink.evaluate((a) => a.click());
-  //     let hotelViewPromise = getNewPageWhenLoaded();
-  //     let hotelViewPage = await hotelViewPromise;
-  //     await hotelViewPage.waitForTimeout(4000);
-
-  //     // const table = await hotelViewPage.$("#hprt-table");
-  //     // await table.screenshot({ path: `./out/${hotelT}.png` });
-  //     // await hotelViewPage.waitForTimeout(5000);
-  //     // await hotelViewPage.close();
-  //   }
-  // });
-
-  //   const [viewHotel] = await newPage.$x(
-  //     `//*[@id="search_results_table"]/div[2]/div/div/div/div[6]/div[1]/div[1]/div[2]/div/div[1]/div[1]/div/div[1]/div/h3/a`
-  //   );
-
-  //   await viewHotel.click();
-  //   const hotelviewProm = getNewPageWhenLoaded();
-  //   const hotelPage = await hotelviewProm;
-
-  //   await hotelPage.waitForTimeout(4000);
-
-  //   //   let html = await hotelPage.content();
-
-  //   //   fs.writeFile("./output/hotel.html", html, (err) => {
-  //   //     if (err) {
-  //   //       console.error(err);
-  //   //     }
-  //   //     // file written successfully
-  //   //   });
-
-  //   const table = await hotelPage.$("#hprt-table");
-  //   //   console.log(prices[1][2].split("\n"));
-  //   await table.screenshot({ path: "./out/all-prices.png" });
   await browser.close();
 })();
+
+async function ssTable(page, title) {
+  await page.waitForTimeout(4000);
+  const table = await page.$("#hprt-table");
+  let priceRows = await page.$$("#hprt-table tr");
+  priceRows.shift();
+  let cheapest = {
+    index: 0,
+    price: 100000000,
+  };
+  for (let j = 0; j < priceRows.length; j++) {
+    let priceElem = await priceRows[j].$("span.prco-valign-middle-helper");
+    let priceString = await page.evaluate((el) => el.textContent, priceElem);
+    let price = Number(priceString.replace(/[^0-9.-]+/g, ""));
+
+    if (cheapest.price > price) {
+      cheapest.price = price;
+      cheapest.index = j;
+    }
+    // const price = priceRows[j].$eval;
+  }
+  priceRows[cheapest.index].screenshot({
+    path: `./out/${title}-cheap.png`,
+  });
+
+  await table.screenshot({ path: `./out/${title}.png` });
+
+  page.click(
+    `#hp_availability_style_changes > div.sb-searchbox__outer > form > div > div.xp__dates.xp__group`
+  );
+  await page.waitForTimeout(3000);
+  // await page.close();
+}
