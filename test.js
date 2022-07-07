@@ -6,10 +6,7 @@ todayArr[2] = ("0" + (Number(todayArr[2]) + 1)).slice(-2);
 let nextDay = todayArr.join("-");
 
 (async () => {
-  let browser = await puppeteer.launch({
-    args: ["--start-maximized"],
-    devtools: true,
-  });
+  let browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.setViewport({
     width: 1920,
@@ -19,6 +16,7 @@ let nextDay = todayArr.join("-");
   await page.goto("https://booking.com", {
     waitUntil: "networkidle2",
   });
+  await page.waitForTimeout(4000);
 
   const needs = await page.$('[data-ats="44"]');
   const [hotelsLink] = await needs.$x("//a[contains(text(), 'Hotels')]");
@@ -123,12 +121,12 @@ async function ssTable(page, title) {
 
     if (cheapest.price > price) {
       cheapest.price = price;
-      cheapest.index = j;
+      cheapest.index = j; 
     }
     // const price = priceRows[j].$eval;
   }
   priceRows[cheapest.index].screenshot({
-    path: `./out/${title}-cheap.png`,
+    path: `./out/${title}-cheapest_room.png`,
   });
 
   await table.screenshot({ path: `./out/${title}.png` });
