@@ -4,7 +4,7 @@ import os
 from pyppeteer import launch
 from pyppeteer.page import Page
 from pyppeteer.element_handle import ElementHandle
-
+etestse
 loop = asyncio.get_event_loop()
 result_page = asyncio.get_event_loop().create_future()
 
