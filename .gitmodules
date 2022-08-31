@@ -1,0 +1,3 @@
+[submodule "ngcab-driver"]
+	path = ngcab-driver
+	url = git@github.com:BzyFuzy/ngcab-driver.git
